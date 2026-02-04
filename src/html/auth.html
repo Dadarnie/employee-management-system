@@ -1,0 +1,91 @@
+<!-- Authentication Section -->
+<div id="auth-section">
+    <div class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1>✨ Employee System ✨</h1>
+                <p style="color: var(--text-secondary);">Welcome back!</p>
+            </div>
+            
+            <!-- Auth Tabs -->
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="switchAuthTab('signin')">Sign In</button>
+                <button class="auth-tab" onclick="switchAuthTab('signup')">Sign Up</button>
+            </div>
+            
+            <div id="alert-container"></div>
+            
+            <!-- Sign In Form -->
+            <form id="signin-form" class="auth-form">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signin-email" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-input-group">
+                        <input type="password" id="signin-password" required placeholder="Enter your password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('signin-password')" title="Show/Hide Password">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Sign In</button>
+                
+                <div class="text-center">
+                    <button type="button" class="link-button" onclick="showForgotPassword()">
+                        Forgot Password?
+                    </button>
+                </div>
+            </form>
+            
+            <!-- Sign Up Form -->
+            <form id="signup-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signup-name" required placeholder="Enter your full name">
+                </div>
+                
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signup-email" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label>Password</label>
+                    <div class="password-input-group">
+                        <input type="password" id="signup-password" required minlength="8" placeholder="Minimum 8 characters">
+                        <button type="button" class="toggle-password" onclick="togglePassword('signup-password')" title="Show/Hide Password">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <div class="password-input-group">
+                        <input type="password" id="signup-confirm" required placeholder="Re-enter password">
+                        <button type="button" class="toggle-password" onclick="togglePassword('signup-confirm')" title="Show/Hide Password">
+                            <span class="eye-icon">👁️</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Create Account</button>
+            </form>
+            
+            <!-- Forgot Password Form -->
+            <form id="forgot-form" class="auth-form hidden">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="forgot-email" required placeholder="Enter your email">
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Reset Password</button>
+                <button type="button" class="btn btn-secondary" onclick="showSignIn()">Back to Sign In</button>
+            </form>
+        </div>
+    </div>
+</div>

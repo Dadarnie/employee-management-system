@@ -1,0 +1,24 @@
+/* ============================================
+   COLOR & DESIGN VARIABLES
+   ============================================ */
+
+:root {
+    --primary-pink: #FFB5E8;
+    --primary-lavender: #E0BBE4;
+    --primary-mint: #B4E7CE;
+    --primary-peach: #FFDAB9;
+    --primary-sky: #C7CEEA;
+    
+    --bg-gradient: linear-gradient(135deg, #FFE5F1 0%, #E8F5E9 50%, #FFF8E1 100%);
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-shadow: 0 8px 32px rgba(255, 182, 232, 0.15);
+    
+    --text-primary: #5D4E6D;
+    --text-secondary: #8B7E96;
+    --text-light: #A99FB0;
+    
+    --radius-soft: 24px;
+    --radius-medium: 18px;
+    --radius-small: 12px;
+    --radius-pill: 50px;
+}

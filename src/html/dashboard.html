@@ -1,0 +1,60 @@
+<!-- Dashboard Section -->
+<div id="dashboard-section" class="dashboard">
+    <div class="dashboard-header">
+        <h1>📊 Dashboard</h1>
+        <div class="user-info">
+            <span>Welcome, <strong id="user-name"></strong>!</span>
+            <button class="btn-logout" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <!-- Employees Table -->
+    <div class="table-container">
+        <div class="table-header">
+            <h2>👥 Employees</h2>
+            <button class="btn btn-add" onclick="openEmployeeModal()">
+                ➕ Add Employee
+            </button>
+        </div>
+        
+        <table id="employees-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Position</th>
+                    <th>Salary</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="employees-tbody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Users Table (Admin Only) -->
+    <div id="users-table-container" class="table-container hidden">
+        <div class="table-header">
+            <h2>🔐 Users</h2>
+        </div>
+        
+        <table id="users-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+</div>

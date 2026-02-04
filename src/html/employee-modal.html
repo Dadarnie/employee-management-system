@@ -1,0 +1,72 @@
+<!-- Employee Modal -->
+<div id="employee-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="employee-modal-title">Add Employee</h2>
+            <button class="close-modal" onclick="closeEmployeeModal()">&times;</button>
+        </div>
+        
+        <div id="modal-alert-container"></div>
+        
+        <form id="employee-form">
+            <input type="hidden" id="employee-id">
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>First Name *</label>
+                    <input type="text" id="emp-firstname" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Last Name *</label>
+                    <input type="text" id="emp-lastname" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="emp-email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Phone</label>
+                    <input type="tel" id="emp-phone">
+                </div>
+                
+                <div class="form-group">
+                    <label>Department *</label>
+                    <select id="emp-department" required>
+                        <option value="">Select Department</option>
+                        <option value="HR">Human Resources</option>
+                        <option value="IT">Information Technology</option>
+                        <option value="Sales">Sales & Marketing</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Operations">Operations</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Position *</label>
+                    <input type="text" id="emp-position" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Hire Date *</label>
+                    <input type="date" id="emp-hiredate" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Salary *</label>
+                    <input type="number" id="emp-salary" required step="0.01">
+                </div>
+                
+                <div class="form-group full-width">
+                    <label>Address</label>
+                    <textarea id="emp-address" rows="3"></textarea>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary">Save Employee</button>
+            <button type="button" class="btn btn-secondary" onclick="closeEmployeeModal()">Cancel</button>
+        </form>
+    </div>
+</div>
