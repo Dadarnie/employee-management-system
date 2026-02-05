@@ -74,6 +74,61 @@ def init_db():
         )
     ''')
     
+    # Create password log table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS password_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            changed_by_user_id INTEGER,
+            changed_by_name TEXT,
+            module TEXT,
+            old_password_hash TEXT,
+            new_password_hash TEXT,
+            ip_address TEXT,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id),
+            FOREIGN KEY (changed_by_user_id) REFERENCES users(id)
+        )
+    ''')
+    
+    # Create login attempts table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS login_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            email TEXT NOT NULL,
+            attempt_count INTEGER DEFAULT 1,
+            last_attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            is_locked INTEGER DEFAULT 0,
+            cooldown_until TIMESTAMP,
+            ip_address TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
+        )
+    ''')
+    
+    # Create deleted employees table
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS deleted_employees (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            employee_id INTEGER,
+            first_name TEXT NOT NULL,
+            last_name TEXT NOT NULL,
+            email TEXT,
+            department TEXT,
+            position TEXT,
+            salary REAL,
+            phone TEXT,
+            hire_date DATE,
+            address TEXT,
+            deleted_by_user_id INTEGER,
+            deleted_by_name TEXT,
+            deleted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            deletion_reason TEXT,
+            FOREIGN KEY (deleted_by_user_id) REFERENCES users(id)
+        )
+    ''')
+    
     conn.commit()
     
     # Seed admin user if not exists
@@ -183,21 +238,96 @@ def register():
 
 @app.route('/api/auth/login', methods=['POST'])
 def login():
-    """Login with email and password"""
+    """Login with email and password with attempt tracking"""
     data = request.get_json()
     
     if not data or not data.get('email') or not data.get('password'):
         return jsonify({'error': 'Missing email or password'}), 400
     
+    email = data['email']
+    password = data['password']
+    ip_address = request.remote_addr
+    
     conn = get_db()
     cursor = conn.cursor()
     
-    cursor.execute('SELECT * FROM users WHERE email = ?', (data['email'],))
-    user_row = cursor.fetchone()
-    conn.close()
+    # Check login attempts
+    cursor.execute('SELECT * FROM login_attempts WHERE email = ?', (email,))
+    login_attempt = cursor.fetchone()
     
-    if not user_row or not check_password_hash(user_row['password'], data['password']):
-        return jsonify({'error': 'Invalid email or password'}), 401
+    if login_attempt:
+        if login_attempt['is_locked']:
+            cooldown_time = datetime.fromisoformat(login_attempt['cooldown_until'])
+            if datetime.utcnow() < cooldown_time:
+                remaining = (cooldown_time - datetime.utcnow()).total_seconds()
+                conn.close()
+                return jsonify({
+                    'error': f'Account locked. Try again in {int(remaining)} seconds',
+                    'locked': True,
+                    'remaining_cooldown': int(remaining)
+                }), 429
+            else:
+                # Cooldown expired, unlock account
+                cursor.execute('UPDATE login_attempts SET is_locked = 0, attempt_count = 0 WHERE email = ?', (email,))
+                conn.commit()
+    
+    # Verify credentials
+    cursor.execute('SELECT * FROM users WHERE email = ?', (email,))
+    user_row = cursor.fetchone()
+    
+    if not user_row or not check_password_hash(user_row['password'], password):
+        # Log failed attempt
+        if login_attempt:
+            new_count = login_attempt['attempt_count'] + 1
+            cursor.execute('''
+                UPDATE login_attempts 
+                SET attempt_count = ?, last_attempt_time = CURRENT_TIMESTAMP
+                WHERE email = ?
+            ''', (new_count, email))
+            
+            # Check if reached limit
+            if new_count >= 5:
+                cooldown_until = datetime.utcnow() + timedelta(seconds=30)
+                cursor.execute('''
+                    UPDATE login_attempts 
+                    SET is_locked = 1, cooldown_until = ?
+                    WHERE email = ?
+                ''', (cooldown_until.isoformat(), email))
+                conn.commit()
+                conn.close()
+                return jsonify({
+                    'error': 'Account locked due to too many failed attempts. Try again in 30 seconds',
+                    'locked': True,
+                    'remaining_cooldown': 30
+                }), 429
+            elif new_count == 3:
+                conn.commit()
+                conn.close()
+                return jsonify({
+                    'error': 'Invalid email or password. Warning: 2 more attempts before 30-second cooldown',
+                    'attempts_remaining': 5 - new_count,
+                    'warning': True
+                }), 401
+            else:
+                conn.commit()
+                conn.close()
+                return jsonify({
+                    'error': 'Invalid email or password',
+                    'attempts_remaining': 5 - new_count
+                }), 401
+        else:
+            # First failed attempt
+            cursor.execute('''
+                INSERT INTO login_attempts (email, user_id, attempt_count, ip_address)
+                VALUES (?, ?, 1, ?)
+            ''', (email, user_row['id'] if user_row else None, ip_address))
+            conn.commit()
+            conn.close()
+            return jsonify({'error': 'Invalid email or password'}), 401
+    
+    # Successful login - reset attempts
+    if login_attempt:
+        cursor.execute('UPDATE login_attempts SET attempt_count = 0, is_locked = 0 WHERE email = ?', (email,))
     
     user = {
         'id': user_row['id'],
@@ -206,11 +336,20 @@ def login():
         'role': user_row['role']
     }
     
+    # Log successful login attempt
+    cursor.execute('''
+        INSERT INTO login_attempts (user_id, email, attempt_count, ip_address)
+        VALUES (?, ?, 0, ?)
+    ''', (user['id'], email, ip_address))
+    
     # Generate JWT token
     token = jwt.encode({
         'user_id': user['id'],
         'exp': datetime.utcnow() + timedelta(days=7)
     }, app.config['SECRET_KEY'], algorithm='HS256')
+    
+    conn.commit()
+    conn.close()
     
     return jsonify({'user': user, 'token': token}), 200
 
@@ -484,21 +623,227 @@ def update_employee(current_user_id, emp_id):
 @app.route('/api/employees/<int:emp_id>', methods=['DELETE'])
 @token_required
 def delete_employee(current_user_id, emp_id):
-    """Delete employee"""
+    """Soft delete employee (move to deleted_employees table)"""
     conn = get_db()
     cursor = conn.cursor()
     
     # Check exists
     cursor.execute('SELECT * FROM employees WHERE id = ?', (emp_id,))
-    if not cursor.fetchone():
+    employee = cursor.fetchone()
+    if not employee:
         conn.close()
         return jsonify({'error': 'Employee not found'}), 404
     
+    # Get current user info
+    cursor.execute('SELECT name FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    
     try:
+        # Move to deleted_employees table
+        cursor.execute('''
+            INSERT INTO deleted_employees 
+            (employee_id, first_name, last_name, email, department, position, 
+             salary, phone, hire_date, address, deleted_by_user_id, deleted_by_name)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            emp_id,
+            employee['first_name'],
+            employee['last_name'],
+            employee['email'],
+            employee['department'],
+            employee['position'],
+            employee['salary'],
+            employee['phone'],
+            employee['hire_date'],
+            employee['address'],
+            current_user_id,
+            user['name'] if user else 'Unknown'
+        ))
+        
+        # Delete from active employees
         cursor.execute('DELETE FROM employees WHERE id = ?', (emp_id,))
         conn.commit()
         conn.close()
-        return jsonify({'message': 'Employee deleted'}), 200
+        return jsonify({'message': 'Employee deleted and moved to archive'}), 200
+    except Exception as e:
+        conn.close()
+        return jsonify({'error': str(e)}), 500
+
+# ============ Password & Login Log Routes ============
+
+@app.route('/api/password-logs', methods=['GET'])
+@token_required
+def get_password_logs(current_user_id):
+    """Get password change logs (admin only)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if admin
+    cursor.execute('SELECT role FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    if not user or user['role'] != 'admin':
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    cursor.execute('''
+        SELECT id, user_id, action, changed_by_name, module, timestamp
+        FROM password_logs
+        ORDER BY timestamp DESC
+        LIMIT 100
+    ''')
+    logs = [dict_from_row(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify(logs), 200
+
+@app.route('/api/password-logs/user/<int:user_id>', methods=['GET'])
+@token_required
+def get_user_password_logs(current_user_id, user_id):
+    """Get password logs for specific user"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if admin or same user
+    cursor.execute('SELECT role FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    if not user or (user['role'] != 'admin' and current_user_id != user_id):
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    cursor.execute('''
+        SELECT id, action, changed_by_name, module, timestamp
+        FROM password_logs
+        WHERE user_id = ?
+        ORDER BY timestamp DESC
+        LIMIT 50
+    ''', (user_id,))
+    logs = [dict_from_row(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify(logs), 200
+
+@app.route('/api/login-logs', methods=['GET'])
+@token_required
+def get_login_logs(current_user_id):
+    """Get login attempt logs (admin only)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if admin
+    cursor.execute('SELECT role FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    if not user or user['role'] != 'admin':
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    cursor.execute('''
+        SELECT id, user_id, email, attempt_count, last_attempt_time, 
+               is_locked, ip_address
+        FROM login_attempts
+        ORDER BY last_attempt_time DESC
+        LIMIT 200
+    ''')
+    logs = [dict_from_row(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify(logs), 200
+
+@app.route('/api/login-logs/user/<int:user_id>', methods=['GET'])
+@token_required
+def get_user_login_logs(current_user_id, user_id):
+    """Get login logs for specific user"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if admin or same user
+    cursor.execute('SELECT role FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    if not user or (user['role'] != 'admin' and current_user_id != user_id):
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    cursor.execute('''
+        SELECT id, attempt_count, last_attempt_time, is_locked, ip_address
+        FROM login_attempts
+        WHERE user_id = ?
+        ORDER BY last_attempt_time DESC
+        LIMIT 50
+    ''', (user_id,))
+    logs = [dict_from_row(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify(logs), 200
+
+@app.route('/api/deleted-employees', methods=['GET'])
+@token_required
+def get_deleted_employees(current_user_id):
+    """Get deleted employees (admin only)"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if admin
+    cursor.execute('SELECT role FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    if not user or user['role'] != 'admin':
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    cursor.execute('''
+        SELECT id, employee_id, first_name, last_name, email, department, position,
+               salary, phone, hire_date, deleted_by_name, deleted_at
+        FROM deleted_employees
+        ORDER BY deleted_at DESC
+    ''')
+    employees = [dict_from_row(row) for row in cursor.fetchall()]
+    conn.close()
+    
+    return jsonify(employees), 200
+
+@app.route('/api/deleted-employees/<int:emp_id>/restore', methods=['POST'])
+@token_required
+def restore_employee(current_user_id, emp_id):
+    """Restore deleted employee"""
+    conn = get_db()
+    cursor = conn.cursor()
+    
+    # Check if admin
+    cursor.execute('SELECT role FROM users WHERE id = ?', (current_user_id,))
+    user = cursor.fetchone()
+    if not user or user['role'] != 'admin':
+        conn.close()
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    # Get deleted employee
+    cursor.execute('SELECT * FROM deleted_employees WHERE id = ?', (emp_id,))
+    deleted_emp = cursor.fetchone()
+    if not deleted_emp:
+        conn.close()
+        return jsonify({'error': 'Deleted employee not found'}), 404
+    
+    try:
+        # Restore to employees table
+        cursor.execute('''
+            INSERT INTO employees 
+            (first_name, last_name, email, department, position, 
+             salary, phone, hire_date, address, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+        ''', (
+            deleted_emp['first_name'],
+            deleted_emp['last_name'],
+            deleted_emp['email'],
+            deleted_emp['department'],
+            deleted_emp['position'],
+            deleted_emp['salary'],
+            deleted_emp['phone'],
+            deleted_emp['hire_date'],
+            deleted_emp['address']
+        ))
+        
+        # Delete from deleted_employees table
+        cursor.execute('DELETE FROM deleted_employees WHERE id = ?', (emp_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'message': 'Employee restored'}), 200
     except Exception as e:
         conn.close()
         return jsonify({'error': str(e)}), 500
@@ -574,7 +919,7 @@ if __name__ == '__main__':
     print('🔧 Initializing database...')
     init_db()
     print('✓ Database ready')
-    print('\n✓ Server running on http://localhost:5001')
+    print('\n✓ Server running on http://localhost:5002')
     print('✓ CORS enabled for: http://localhost:8888')
     print('Press Ctrl+C to stop\n')
-    app.run(host='127.0.0.1', port=5001, debug=False, use_reloader=False)
+    app.run(host='127.0.0.1', port=5002, debug=False, use_reloader=False)

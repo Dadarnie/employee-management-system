@@ -72,6 +72,38 @@ class AuthModule {
                 }, 1000);
             })
             .catch(error => {
+                const errorData = error.response || {};
+                
+                // Check for locked account
+                if (errorData.locked) {
+                    const remaining = errorData.remaining_cooldown || 30;
+                    showAlert('error', `Account locked. Try again in ${remaining} seconds. ⏰`);
+                    
+                    // Disable input for cooldown period
+                    const inputs = document.querySelectorAll('#signin-form input, #signin-form button');
+                    inputs.forEach(input => input.disabled = true);
+                    
+                    setTimeout(() => {
+                        inputs.forEach(input => input.disabled = false);
+                        showAlert('success', 'Account unlocked. You can try again now.');
+                    }, remaining * 1000);
+                    
+                    return;
+                }
+                
+                // Check for warning (3+ attempts)
+                if (errorData.warning) {
+                    const remaining = errorData.attempts_remaining || 2;
+                    showAlert('warning', `⚠️ WARNING: ${remaining} attempt(s) remaining before 30-second cooldown!`);
+                    return;
+                }
+                
+                // Check for remaining attempts
+                if (errorData.attempts_remaining !== undefined) {
+                    showAlert('error', `Invalid email or password. Attempts remaining: ${errorData.attempts_remaining}`);
+                    return;
+                }
+                
                 showAlert('error', error.message || 'Invalid email or password');
             });
     }

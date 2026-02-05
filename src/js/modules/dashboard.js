@@ -3,10 +3,11 @@
    ============================================ */
 
 class DashboardModule {
-    constructor(db, employeeModule, userModule) {
+    constructor(db, employeeModule, userModule, logsModule) {
         this.db = db;
         this.employeeModule = employeeModule;
         this.userModule = userModule;
+        this.logsModule = logsModule;
     }
     
     show() {
@@ -24,12 +25,22 @@ class DashboardModule {
         
         this.employeeModule.loadEmployees();
         
-        // Show users table for admin role
+        // Show admin-only tables
         if (currentUser.role === 'admin') {
             document.getElementById('users-table-container').classList.remove('hidden');
+            document.getElementById('password-log-container').classList.remove('hidden');
+            document.getElementById('login-log-container').classList.remove('hidden');
+            document.getElementById('deleted-employees-container').classList.remove('hidden');
+            
             this.userModule.loadUsers();
+            this.logsModule.loadPasswordLogs();
+            this.logsModule.loadLoginLogs();
+            this.logsModule.loadDeletedEmployees();
         } else {
             document.getElementById('users-table-container').classList.add('hidden');
+            document.getElementById('password-log-container').classList.add('hidden');
+            document.getElementById('login-log-container').classList.add('hidden');
+            document.getElementById('deleted-employees-container').classList.add('hidden');
         }
     }
     

@@ -238,6 +238,89 @@ textarea:focus {
     }
 }
 
+/* ============================================
+   BADGES & STATUS INDICATORS
+   ============================================ */
+
+.badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.85em;
+    font-weight: 600;
+    text-align: center;
+}
+
+.badge-success {
+    background-color: #B4E7CE;
+    color: #2E5D4C;
+}
+
+.badge-warning {
+    background-color: #FFDAB9;
+    color: #8B4513;
+}
+
+.badge-danger {
+    background-color: #FFB5E8;
+    color: #7D3E5C;
+}
+
+.badge-info {
+    background-color: #C7CEEA;
+    color: #4A3E6E;
+}
+
+/* ============================================
+   TABLE CONTROLS
+   ============================================ */
+
+.table-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 0.85em;
+    border-radius: var(--radius-small);
+}
+
+.btn-success {
+    background-color: #B4E7CE;
+    color: #2E5D4C;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-success:hover {
+    background-color: #9AE0B6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(180, 231, 206, 0.3);
+}
+
+.btn-info {
+    background-color: #C7CEEA;
+    color: #4A3E6E;
+    border: none;
+    transition: all 0.3s ease;
+}
+
+.btn-info:hover {
+    background-color: #B0B8DD;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(199, 206, 234, 0.3);
+}
+
+/* ============================================
+   TEXT UTILITIES
+   ============================================ */
+
+.text-center {
+    text-align: center;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .form-grid {
@@ -250,5 +333,10 @@ textarea:focus {
 
     th, td {
         padding: 10px;
+    }
+    
+    .table-controls {
+        flex-direction: column;
+        width: 100%;
     }
 }

@@ -134,6 +134,9 @@
             <div id="users-table-container" class="table-container hidden">
                 <div class="table-header">
                     <h2>🔐 Users</h2>
+                    <button class="btn btn-add" onclick="openUserModal()">
+                        ➕ Add User
+                    </button>
                 </div>
                 
                 <table id="users-table">
@@ -151,6 +154,131 @@
                         <!-- Data will be inserted here -->
                     </tbody>
                 </table>
+            </div>
+            
+            <!-- Password Log Table (Admin Only) -->
+            <div id="password-log-container" class="table-container hidden">
+                <div class="table-header">
+                    <h2>🔑 Password Change Log</h2>
+                    <div class="table-controls">
+                        <button class="btn btn-secondary" onclick="refreshPasswordLogs()">🔄 Refresh</button>
+                    </div>
+                </div>
+                
+                <table id="password-log-table">
+                    <thead>
+                        <tr>
+                            <th>User ID</th>
+                            <th>Action</th>
+                            <th>Changed By</th>
+                            <th>Module</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody id="password-log-tbody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Login Attempts Log Table (Admin Only) -->
+            <div id="login-log-container" class="table-container hidden">
+                <div class="table-header">
+                    <h2>📝 Login Attempts Log</h2>
+                    <div class="table-controls">
+                        <button class="btn btn-secondary" onclick="refreshLoginLogs()">🔄 Refresh</button>
+                    </div>
+                </div>
+                
+                <table id="login-log-table">
+                    <thead>
+                        <tr>
+                            <th>Email</th>
+                            <th>Attempts</th>
+                            <th>Status</th>
+                            <th>Last Attempt</th>
+                            <th>IP Address</th>
+                        </tr>
+                    </thead>
+                    <tbody id="login-log-tbody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Deleted Employees Table (Admin Only) -->
+            <div id="deleted-employees-container" class="table-container hidden">
+                <div class="table-header">
+                    <h2>🗑️ Deleted Employees Archive</h2>
+                    <div class="table-controls">
+                        <button class="btn btn-secondary" onclick="refreshDeletedEmployees()">🔄 Refresh</button>
+                    </div>
+                </div>
+                
+                <table id="deleted-employees-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Department</th>
+                            <th>Position</th>
+                            <th>Deleted By</th>
+                            <th>Deleted At</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="deleted-employees-tbody">
+                        <!-- Data will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <!-- ============================================
+             USER MODAL
+             ============================================ -->
+        <div id="user-modal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 id="user-modal-title">Add User</h2>
+                    <button class="close-modal" onclick="closeUserModal()">&times;</button>
+                </div>
+                
+                <div id="user-modal-alert-container"></div>
+                
+                <form id="user-form">
+                    <input type="hidden" id="user-id">
+                    
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Full Name *</label>
+                            <input type="text" id="user-name" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Email *</label>
+                            <input type="email" id="user-email" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Password *</label>
+                            <input type="password" id="user-password" required minlength="8" placeholder="Minimum 8 characters">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>Role *</label>
+                            <select id="user-role" required>
+                                <option value="">Select Role</option>
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Save User</button>
+                    <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+                </form>
             </div>
         </div>
         
@@ -235,6 +363,7 @@
     <script src="src/js/modules/auth.js"></script>
     <script src="src/js/modules/employees.js"></script>
     <script src="src/js/modules/users.js"></script>
+    <script src="src/js/modules/logs.js"></script>
     <script src="src/js/modules/dashboard.js"></script>
     <script src="src/js/modules/utils.js"></script>
     

@@ -7,7 +7,7 @@ class Database {
     constructor() {
         // Browser can't access process.env, use hardcoded backend URL
         // Can be changed with setApiURL() if needed
-        this.apiURL = 'http://localhost:5001/api';
+        this.apiURL = 'http://localhost:5002/api';
         this.token = localStorage.getItem('token');
     }
     
@@ -56,7 +56,10 @@ class Database {
             const data = await response.json();
             
             if (!response.ok) {
-                throw new Error(data.error || 'API request failed');
+                const error = new Error(data.error || 'API request failed');
+                error.response = data;
+                error.status = response.status;
+                throw error;
             }
             
             return data;
@@ -173,6 +176,46 @@ class Database {
     }
     
     // ============ Session Management ============
+    // ============ Password & Login Logs ============
+    
+    async getPasswordLogs() {
+        return this.request('/password-logs', {
+            method: 'GET'
+        });
+    }
+    
+    async getUserPasswordLogs(userId) {
+        return this.request(`/password-logs/user/${userId}`, {
+            method: 'GET'
+        });
+    }
+    
+    async getLoginLogs() {
+        return this.request('/login-logs', {
+            method: 'GET'
+        });
+    }
+    
+    async getUserLoginLogs(userId) {
+        return this.request(`/login-logs/user/${userId}`, {
+            method: 'GET'
+        });
+    }
+    
+    async getDeletedEmployees() {
+        return this.request('/deleted-employees', {
+            method: 'GET'
+        });
+    }
+    
+    async restoreEmployee(empId) {
+        return this.request(`/deleted-employees/${empId}/restore`, {
+            method: 'POST'
+        });
+    }
+    
+    // ============ User Management ============
+    
     setCurrentUser(user) {
         if (user) {
             localStorage.setItem('currentUser', JSON.stringify(user));

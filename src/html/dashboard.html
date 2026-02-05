@@ -57,4 +57,82 @@
             </tbody>
         </table>
     </div>
+    
+    <!-- Password Log Table (Admin Only) -->
+    <div id="password-log-container" class="table-container hidden">
+        <div class="table-header">
+            <h2>🔑 Password Change Log</h2>
+            <div class="table-controls">
+                <button class="btn btn-secondary" onclick="refreshPasswordLogs()">🔄 Refresh</button>
+            </div>
+        </div>
+        
+        <table id="password-log-table">
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>Action</th>
+                    <th>Changed By</th>
+                    <th>Module</th>
+                    <th>Timestamp</th>
+                </tr>
+            </thead>
+            <tbody id="password-log-tbody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Login Attempts Log Table (Admin Only) -->
+    <div id="login-log-container" class="table-container hidden">
+        <div class="table-header">
+            <h2>📝 Login Attempts Log</h2>
+            <div class="table-controls">
+                <button class="btn btn-secondary" onclick="refreshLoginLogs()">🔄 Refresh</button>
+            </div>
+        </div>
+        
+        <table id="login-log-table">
+            <thead>
+                <tr>
+                    <th>Email</th>
+                    <th>Attempts</th>
+                    <th>Status</th>
+                    <th>Last Attempt</th>
+                    <th>IP Address</th>
+                </tr>
+            </thead>
+            <tbody id="login-log-tbody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Deleted Employees Table (Admin Only) -->
+    <div id="deleted-employees-container" class="table-container hidden">
+        <div class="table-header">
+            <h2>🗑️ Deleted Employees Archive</h2>
+            <div class="table-controls">
+                <button class="btn btn-secondary" onclick="refreshDeletedEmployees()">🔄 Refresh</button>
+            </div>
+        </div>
+        
+        <table id="deleted-employees-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Department</th>
+                    <th>Position</th>
+                    <th>Deleted By</th>
+                    <th>Deleted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="deleted-employees-tbody">
+                <!-- Data will be inserted here -->
+            </tbody>
+        </table>
+    </div>
 </div>

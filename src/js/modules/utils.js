@@ -63,6 +63,14 @@ function closeEmployeeModal() {
     employeeModule.closeModal();
 }
 
+function openUserModal() {
+    userModule.openModal();
+}
+
+function closeUserModal() {
+    userModule.closeModal();
+}
+
 // Toggle password visibility
 function togglePassword(inputId) {
     const input = document.getElementById(inputId);
@@ -72,8 +80,13 @@ function togglePassword(inputId) {
 
 // Close modal when clicking outside
 window.addEventListener('click', (e) => {
-    const modal = document.getElementById('employee-modal');
-    if (e && e.target === modal) {
+    const employeeModal = document.getElementById('employee-modal');
+    const userModal = document.getElementById('user-modal');
+    
+    if (e && e.target === employeeModal) {
         employeeModule.closeModal();
+    }
+    if (e && e.target === userModal) {
+        userModule.closeModal();
     }
 });

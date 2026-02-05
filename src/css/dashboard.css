@@ -230,6 +230,67 @@ tbody tr:hover {
     grid-column: 1 / -1;
 }
 
+/* ============================================
+   LOG TABLES STYLING
+   ============================================ */
+
+#password-log-container,
+#login-log-container,
+#deleted-employees-container {
+    border-left: 4px solid var(--primary-lavender);
+}
+
+#password-log-container {
+    border-left-color: var(--primary-sky);
+}
+
+#login-log-container {
+    border-left-color: var(--primary-peach);
+}
+
+#deleted-employees-container {
+    border-left-color: var(--primary-pink);
+}
+
+.hidden {
+    display: none !important;
+}
+
+/* ============================================
+   LOCK ICON STYLING
+   ============================================ */
+
+.lock-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-right: 5px;
+}
+
+.lock-indicator.locked {
+    background-color: #FF6B6B;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.lock-indicator.warning {
+    background-color: #FFA500;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+.lock-indicator.safe {
+    background-color: #4CAF50;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+}
+
 @media (max-width: 768px) {
     .dashboard-header {
         flex-direction: column;

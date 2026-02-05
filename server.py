@@ -27,7 +27,7 @@ if __name__ == '__main__':
         with socketserver.TCPServer(("", PORT), MyHTTPRequestHandler) as httpd:
             print(f"✓ Frontend server running on http://localhost:{PORT}")
             print(f"✓ Serving files from: {DIRECTORY}")
-            print(f"✓ Backend API: http://localhost:5000/api")
+            print(f"✓ Backend API: http://localhost:5002/api")
             print(f"\nOpen in browser: http://localhost:{PORT}")
             print("Press Ctrl+C to stop")
             httpd.serve_forever()
@@ -37,5 +37,15 @@ if __name__ == '__main__':
     except OSError as e:
         if "Address already in use" in str(e):
             print(f"✗ Port {PORT} is already in use")
+            # Try alternate port
+            for alt_port in [9000, 9001, 9002]:
+                try:
+                    print(f"\nTrying alternate port {alt_port}...")
+                    with socketserver.TCPServer(("", alt_port), MyHTTPRequestHandler) as httpd:
+                        print(f"✓ Frontend server running on http://localhost:{alt_port}")
+                        print(f"✓ Backend API: http://localhost:5002/api")
+                        httpd.serve_forever()
+                except OSError:
+                    continue
             sys.exit(1)
         raise
